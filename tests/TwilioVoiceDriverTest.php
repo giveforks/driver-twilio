@@ -3,9 +3,9 @@
 namespace Tests;
 
 use Mockery as m;
-use Twilio\Twiml;
+use Twilio\TwiML\VoiceResponse;
 use BotMan\BotMan\Http\Curl;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use BotMan\Drivers\Twilio\TwilioVoiceDriver;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,7 +14,7 @@ use BotMan\BotMan\Messages\Outgoing\Actions\Button;
 use BotMan\BotMan\Messages\Incoming\IncomingMessage;
 use BotMan\BotMan\Messages\Outgoing\OutgoingMessage;
 
-class TwilioVoiceDriverTest extends PHPUnit_Framework_TestCase
+class TwilioVoiceDriverTest extends TestCase
 {
     private function getDriver($parameters = [], $htmlInterface = null)
     {
@@ -193,7 +193,7 @@ class TwilioVoiceDriverTest extends PHPUnit_Framework_TestCase
         ];
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Say voice="man" language="en">string</Say></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -206,7 +206,7 @@ class TwilioVoiceDriverTest extends PHPUnit_Framework_TestCase
         $payload = $driver->buildServicePayload('string', new IncomingMessage('', '', ''), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Say voice="man" language="en">string</Say></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -216,13 +216,13 @@ class TwilioVoiceDriverTest extends PHPUnit_Framework_TestCase
     {
         $driver = $this->getValidDriver();
 
-        $twiml = new Twiml();
+        $twiml = new VoiceResponse();
         $twiml->say('custom twiml');
 
         $payload = $driver->buildServicePayload($twiml, new IncomingMessage('', '', ''), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Say>custom twiml</Say></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -240,7 +240,7 @@ class TwilioVoiceDriverTest extends PHPUnit_Framework_TestCase
         $payload = $driver->buildServicePayload($question, new IncomingMessage('', '', ''), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Gather input="dtmf"><Say voice="man" language="en">This is a question</Say><Say voice="man" language="en">Button 1</Say><Say voice="man" language="en">Button 2</Say></Gather></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -262,5 +262,14 @@ class TwilioVoiceDriverTest extends PHPUnit_Framework_TestCase
         $answer = $driver->getConversationAnswer($incomingMessage);
 
         $this->assertSame('1', $answer->getText());
+    }
+
+    private function sendPayload($driver, $payload)
+    {
+        ob_start();
+        $response = $driver->sendPayload($payload);
+        ob_end_clean();
+
+        return $response;
     }
 }

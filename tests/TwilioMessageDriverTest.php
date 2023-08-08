@@ -4,9 +4,9 @@ namespace Tests;
 
 use Mockery as m;
 use Twilio\Rest\Client;
-use Twilio\Twiml;
+use Twilio\TwiML\MessagingResponse;
 use BotMan\BotMan\Http\Curl;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use BotMan\BotMan\Messages\Attachments\Image;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +16,7 @@ use BotMan\BotMan\Messages\Outgoing\Actions\Button;
 use BotMan\BotMan\Messages\Incoming\IncomingMessage;
 use BotMan\BotMan\Messages\Outgoing\OutgoingMessage;
 
-class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
+class TwilioMessageDriverTest extends TestCase
 {
     private function getDriver($parameters = [], $htmlInterface = null)
     {
@@ -204,8 +204,11 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
             'text' => 'string',
         ];
 
+        ob_start();
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
+        ob_end_clean();
+
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Message><Body>string</Body></Message></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -218,7 +221,7 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
         $payload = $driver->buildServicePayload('string', new IncomingMessage('', '123', '456'), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Message><Body>string</Body></Message></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -247,7 +250,7 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
 
         $payload = $driver->buildServicePayload('string', new IncomingMessage('', '123', ''), []);
 
-        $driver->sendPayload($payload);
+        $this->sendPayload($driver, $payload);
     }
 
     /** @test */
@@ -255,14 +258,14 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
     {
         $driver = $this->getValidDriver();
 
-        $twiml = new Twiml();
-        $message = $twiml->message();
+        $twiml = new MessagingResponse();
+        $message = $twiml->message('');
         $message->body('custom twiml');
 
         $payload = $driver->buildServicePayload($twiml, new IncomingMessage('', '123', '456'), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Message><Body>custom twiml</Body></Message></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -280,7 +283,7 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
         $payload = $driver->buildServicePayload($question, new IncomingMessage('', '123', '456'), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Message><Body>This is a question'.PHP_EOL.'Button 1'.PHP_EOL.'Button 2</Body></Message></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -295,7 +298,7 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
         $payload = $driver->buildServicePayload($message, new IncomingMessage('', '123', '456'), []);
 
         /** @var Response $response */
-        $response = $driver->sendPayload($payload);
+        $response = $this->sendPayload($driver, $payload);
         $expected = '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL.'<Response><Message><Body>This has an attachment</Body><Media>https://botman.io/img/logo.png</Media></Message></Response>'.PHP_EOL;
         $this->assertSame($expected, $response->getContent());
     }
@@ -317,5 +320,14 @@ class TwilioMessageDriverTest extends PHPUnit_Framework_TestCase
         $answer = $driver->getConversationAnswer($incomingMessage);
 
         $this->assertSame('This is my test message', $answer->getText());
+    }
+
+    private function sendPayload($driver, $payload)
+    {
+        ob_start();
+        $response = $driver->sendPayload($payload);
+        ob_end_clean();
+
+        return $response;
     }
 }

@@ -17,13 +17,13 @@
     "require": {
         "php": ">=7.0",
         "botman/botman": "~2.0",
-        "twilio/sdk": "^5.15"
+        "twilio/sdk": "^7.7.1"
     },
     "require-dev": {
         "botman/studio-addons": "~1.0",
         "illuminate/contracts": "~5.5.0",
-        "phpunit/phpunit": "~5.0",
-        "mockery/mockery": "dev-master",
+        "phpunit/phpunit": "^9.3.3",
+        "mockery/mockery": "dev-main",
         "ext-curl": "*"
     },
     "autoload": {
@@ -45,6 +45,12 @@
             "providers": [
                 "BotMan\\Drivers\\Twilio\\Providers\\TwilioServiceProvider"
             ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "thecodingmachine/discovery": true,
+            "kylekatarnls/update-helper": true
         }
     }
 }

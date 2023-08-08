@@ -58,7 +58,7 @@ abstract class TwilioDriver extends HttpDriver
      */
     protected function isSignatureValid()
     {
-        $validator = new RequestValidator($this->config->get('token'));
+        $validator = new RequestValidator((string) $this->config->get('token'));
 
         return $validator->validate($this->signature, $this->requestUri, $this->payload);
     }
